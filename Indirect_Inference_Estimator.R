@@ -27,12 +27,12 @@ mle_est <- function(data_df){
 
 ##Change the value of phi_index to 1, 2, 3, or 4 meaning resp. phi_true=0; 0.3; 0.6; or 0.9
 
-ii_function <- function(phi_h, data = dataDGP1_N100_T5, nRep_H = 10, phi_index, sim_index, T=5){#default
+ii_function <- function(phi_h, data = dataDGP1_N100_T5, nRep_H = 10, phi_index, sim_index, TimeT=5, N_number=100){#default
   
   ##########################
   df = as.data.frame(data[,,phi_index, sim_index]) 
   df$id = seq(1, nrow(df))
-  df_long = reshape(df, direction = "long", idvar = 'id', varying = list(1:T), v.names = "y")
+  df_long = reshape(df, direction = "long", idvar = 'id', varying = list(1:TimeT), v.names = "y")
   #Declare the data in a plm format which enables gmm to understand the data (id and time variable)
   df_long = pdata.frame(df_long, index = c("id", "time"))
   ##########################
@@ -43,9 +43,9 @@ ii_function <- function(phi_h, data = dataDGP1_N100_T5, nRep_H = 10, phi_index, 
   #Phi_identifier = c(paste0('Phi=', phi_h))
   
   ##Simulate H paths as function of phi (the argument under which to minimize)
-  sim_h <-  sim_functionDGP1(N=100, T=5, Phi_values = phi_h)
+  sim_h <-  sim_functionDGP1(N=N_number, T=TimeT, Phi_values = phi_h)
   phi_mle_h = c()
-
+  
   
   for(h in 1:nRep_H){
     
@@ -56,34 +56,33 @@ ii_function <- function(phi_h, data = dataDGP1_N100_T5, nRep_H = 10, phi_index, 
     #Declare the data in a plm format which enables gmm to understand the data (id and time variable)
     df_long_h = pdata.frame(df_long_h, index = c("id", "time"))
     ##########################
-
+    
     phi_mle_h <- mle_est(df_long_h)
   }
   ##The value to minimize according to phi_h
   return((phi_mle - mean(phi_mle_h))^2)
 }
 #ii_function(0, sim_index = 120, phi_index = 3)
-###Herein, you need to change v=by hand the name of the data for wgich you would like to applied the method
-nRep = 5000
+nRep = 10
 ##Get the value of the Indirect Inference Estimate
 
 bias_II =c()
 RMSE_II = c()
 
 for(phi_index in seq(1, 5)){
-II_estimate  = c()
-for (i in seq(1, nRep)) {
-  II = optimize(ii_function,
-                interval = c(-1, 1), maximum = FALSE, sim_index = i, nRep_H=10,  phi_index = phi_index, data = dataDGP1_N100_T20, tol = 0.01)
-  II_estimate = c(II_estimate, II$minimum)
-}
-
-bias_II = c(bias_II, mean(II_estimate) - Phi_values[1])
-RMSE_II = c(RMSE_II, sd(II_estimate - Phi_values[1]))
+  II_estimate  = c()
+  for (i in seq(1, nRep)) {
+    II = optimize(ii_function,
+                  interval = c(-1, 1), maximum = FALSE, sim_index = i, nRep_H=10,  phi_index = phi_index, data = dataDGP1_N200_T20, tol = 0.01, TimeT=20, N_number=200)
+    II_estimate = c(II_estimate, II$minimum)
+  }
+  
+  bias_II = c(bias_II, mean(II_estimate) - Phi_values[1])
+  RMSE_II = c(RMSE_II, sd(II_estimate - Phi_values[1]))
 }
 
 II_results =data.frame(bias = bias_II, RMSE = RMSE_II)
-write.csv(II_results, file = paste0("table_out_II", '_', "DGP1_N100_T20", '.csv' ))
+write.csv(II_results, file = paste0("table_out_II", '_', "DGP1_N200_T20", '.csv' ))
 
 #
 
