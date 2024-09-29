@@ -6,6 +6,6 @@ In brief, the scripts include code that:
 
 ### 1. Generate many DGPs
 ### 2. Compute the ML estimator 
-### 3. Conmpute the GMM estimator
-### 4. Conpute the Indirect Inference estimator
+### 3. Compute the GMM estimator
+### 4. Compute the Indirect Inference estimator
 
